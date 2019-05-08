@@ -10,11 +10,13 @@ class OrbitDbAPI ():
         self.__config = kwargs
         self.__base_url = self.__config.get('base_url')
         self.__use_db_cache = self.__config.get('use_db_cache')
+        self.__session = requests.Session()
+
 
 
     def _do_request(self, *args, **kwargs):
         try:
-            return requests.request(*args, **kwargs)
+            return self.__session.request(*args, **kwargs)
         except:
             self.logger.exception('Exception during api call')
             raise
