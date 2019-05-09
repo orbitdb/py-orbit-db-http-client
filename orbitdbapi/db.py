@@ -48,6 +48,13 @@ class DB ():
     def dbtype(self):
         return self.__type
 
+    @property
+    def queryable(self):
+        return 'query' in self.__params.get('capabilities', {})
+    @property
+    def putable(self):
+        return 'put' in self.__params.get('capabilities', {})
+
     def info(self):
         endpoint = '/'.join(['db', self.__id_safe])
         return self.__client._call('get', endpoint)
@@ -101,7 +108,9 @@ class DB ():
 
     def index(self):
         endpoint = '/'.join(['db', self.__id_safe, 'index'])
-        return self.__client._call('get', endpoint)
+        result = self.__client._call('get', endpoint)
+        self.__cache = result
+        return result
 
     def unload(self):
         endpoint = '/'.join(['db', self.__id_safe])
