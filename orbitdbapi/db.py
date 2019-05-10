@@ -151,7 +151,13 @@ class DB ():
     def index(self):
         endpoint = '/'.join(['db', self.__id_safe, 'index'])
         result = self.__client._call('get', endpoint)
-        self.__cache = result
+        return result
+
+    def all(self):
+        endpoint = '/'.join(['db', self.__id_safe, 'all'])
+        result = self.__client._call('get', endpoint)
+        if isinstance(result, Hashable):
+            self.__cache = result
         return result
 
     def remove(self, item):
