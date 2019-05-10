@@ -15,7 +15,9 @@ class DB ():
         self.__id_safe = urlquote(self.__id, safe='')
         self.__type = params['type']
         self.__use_cache = kwargs.get('use_db_cache', client.use_db_cache)
-        self.__enforce_caps = kwargs.get('__enforce_caps', True)
+        self.__enforce_caps = kwargs.get('enforce_caps', True)
+        self.__enforce_indexby = kwargs.get('enforce_indexby', True)
+
         self.logger = logging.getLogger(__name__)
         self.__index_by = self.index_by
 
@@ -114,7 +116,7 @@ class DB ():
             if self.indexed:
                 if hasattr(item, self.__index_by):
                     index_val = getattr(item, self.__index_by)
-                else:
+                elif self.__enforce_indexby:
                     raise MissingIndexError("The provided document doesn't contain field '{}'".format(self.__index_by))
             else:
                 index_val = item.get('key')
