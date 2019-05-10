@@ -10,6 +10,7 @@ class DB ():
         self.__cache = {}
         self.__client = client
         self.__params = params
+        self.__db_options = params.get('options', {})
         self.__dbname = params['dbname']
         self.__id = params['id']
         self.__id_safe = urlquote(self.__id, safe='')
@@ -19,7 +20,7 @@ class DB ():
         self.__enforce_indexby = kwargs.get('enforce_indexby', True)
 
         self.logger = logging.getLogger(__name__)
-        self.__index_by = self.index_by
+        self.__index_by = self.__db_options.get('indexBy')
 
 
     def clear_cache(self):
@@ -36,7 +37,7 @@ class DB ():
 
     @property
     def index_by(self):
-        return self.__params.get('indexBy')
+        return self.__index_by
 
     @property
     def cache(self):
@@ -83,7 +84,7 @@ class DB ():
 
     @property
     def indexed(self):
-        return 'indexBy' in self.__params
+        return 'indexBy' in self.__db_options
 
     def info(self):
         endpoint = '/'.join(['db', self.__id_safe])
