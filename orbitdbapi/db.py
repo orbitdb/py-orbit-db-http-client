@@ -18,7 +18,7 @@ class DB ():
         self.logger = logging.getLogger(__name__)
 
         if hasattr( self.params, 'indexBy'):
-            self.index_by = self.__params.indexBy
+            self.__index_by = self.__params.indexBy
 
     def clear_cache(self):
         self.__cache = {}
@@ -31,6 +31,10 @@ class DB ():
         item = str(item)
         if item in self.__cache:
             del self.__cache[item]
+
+    @property
+    def indexBy(self):
+        return self.__params.get('indexBy')
 
     @property
     def cache(self):
@@ -59,6 +63,10 @@ class DB ():
     def removeable(self):
         return 'remove' in self.__params.get('capabilities', {})
 
+    @property
+    def indexed(self):
+        return hasattr(self, '__index_by')
+
     def info(self):
         endpoint = '/'.join(['db', self.__id_safe])
         return self.__client._call('get', endpoint)
@@ -67,12 +75,13 @@ class DB ():
         if cache is None: cache = self.__use_cache
         item = str(item)
         if cache and item in self.__cache:
-            result = deepcopy(self.__cache[item])
+            result = self.__cache[item]
         else:
             endpoint = '/'.join(['db', self.__id_safe, item])
             result = self.__client._call('get', endpoint)
             if cache: self.__cache[item] = result
         if isinstance(result, Hashable): return deepcopy(result)
+        if isinstance(result, Iterable): return deepcopy(result)
         #if isinstance(result, Iterable): return deepcopy(next(result, {}))
         #if isinstance(result, list): return deepcopy(next(iter(result), {}))
         return result
@@ -84,11 +93,14 @@ class DB ():
     def put(self,  item, cache=None):
         if cache is None: cache = self.__use_cache
         if cache:
-            if hasattr(self, 'index_by'):
-                if hasattr(item, self.index_by):
-                    index_val = getattr(item, self.index_by)
+            if hasattr(self, '__index_by'):
+                if hasattr(item, self.__index_by):
+                    index_val = getattr(item, self.__index_by)
                 else:
-                    index_val = item[self.index_by]
+                    raise MissingIndexError("The provided document doesn't contain field '{}'".format(self.__index_by))
+            else:
+                index_val = item.get('key')
+            if index_val:
                 self.__cache[index_val] = item
         endpoint = '/'.join(['db', self.__id_safe, 'put'])
         entry_hash = self.__client._call('post', endpoint, item)
@@ -128,4 +140,7 @@ class DB ():
         return self.__client._call('delete', endpoint)
 
 class CapabilityError(Exception):
+    pass
+
+class MissingIndexError(Exception):
     pass
