@@ -15,6 +15,7 @@ class DB ():
         self.__id_safe = urlquote(self.__id, safe='')
         self.__type = params['type']
         self.__use_cache = kwargs.get('use_db_cache')
+        self.__enforce_caps = kwargs.get('__enforce_caps', True)
         self.logger = logging.getLogger(__name__)
 
         if hasattr( self.params, 'indexBy'):
@@ -64,6 +65,22 @@ class DB ():
         return 'remove' in self.__params.get('capabilities', {})
 
     @property
+    def iterable(self):
+        return 'iterator' in self.__params.get('capabilities', {})
+
+    @property
+    def addable(self):
+        return 'add' in self.__params.get('capabilities', {})
+
+    @property
+    def valuable(self):
+        return 'value' in self.__params.get('capabilities', {})
+
+    @property
+    def incrementable(self):
+        return 'inc' in self.__params.get('capabilities', {})
+
+    @property
     def indexed(self):
         return hasattr(self, '__index_by')
 
@@ -91,6 +108,8 @@ class DB ():
         return (self.__client._call('get', endpoint))
 
     def put(self,  item, cache=None):
+        if self.__enforce_caps and not self.putable:
+            raise CapabilityError('Db {} does not have put capability'.format(self.__dbname))
         if cache is None: cache = self.__use_cache
         if cache:
             if hasattr(self, '__index_by'):
@@ -108,6 +127,8 @@ class DB ():
         return entry_hash
 
     def add(self, item, cache=None):
+        if self.__enforce_caps and not self.addable:
+            raise CapabilityError('Db {} does not have add capability'.format(self.__dbname))
         if cache is None: cache = self.__use_cache
         endpoint = '/'.join(['db', self.__id_safe, 'add'])
         entry_hash = self.__client._call('post', endpoint, item)
@@ -115,10 +136,14 @@ class DB ():
         return entry_hash
 
     def iterator_raw(self, params):
+        if self.__enforce_caps and not self.iterable:
+            raise CapabilityError('Db {} does not have remove capability'.format(self.__dbname))
         endpoint =  '/'.join(['db', self.__id_safe, 'rawiterator'])
         return self.__client._call('get', endpoint, params)
 
     def iterator(self, params):
+        if self.__enforce_caps and not self.iterable:
+            raise CapabilityError('Db {} does not have remove capability'.format(self.__dbname))
         endpoint =  '/'.join(['db', self.__id_safe, 'iterator'])
         return self.__client._call('get', endpoint, params)
 
@@ -129,8 +154,8 @@ class DB ():
         return result
 
     def remove(self, item):
-        if not self.removeable:
-            raise CapabilityError('Db does not have remove capability')
+        if self.__enforce_caps and not self.removeable:
+            raise CapabilityError('Db {} does not have remove capability'.format(self.__dbname))
         item = str(item)
         endpoint = '/'.join(['db', self.__id_safe, item])
         return self.__client._call('delete', endpoint)
