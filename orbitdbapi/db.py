@@ -55,6 +55,10 @@ class DB ():
     def putable(self):
         return 'put' in self.__params.get('capabilities', {})
 
+    @property
+    def removeable(self):
+        return 'remove' in self.__params.get('capabilities', {})
+
     def info(self):
         endpoint = '/'.join(['db', self.__id_safe])
         return self.__client._call('get', endpoint)
@@ -112,6 +116,16 @@ class DB ():
         self.__cache = result
         return result
 
+    def remove(self, item):
+        if not self.removeable:
+            raise CapabilityError('Db does not have remove capability')
+        item = str(item)
+        endpoint = '/'.join(['db', self.__id_safe, item])
+        return self.__client._call('delete', endpoint)
+
     def unload(self):
         endpoint = '/'.join(['db', self.__id_safe])
         return self.__client._call('delete', endpoint)
+
+class CapabilityError(Exception):
+    pass
