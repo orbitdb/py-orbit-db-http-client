@@ -14,12 +14,11 @@ class DB ():
         self.__id = params['id']
         self.__id_safe = urlquote(self.__id, safe='')
         self.__type = params['type']
-        self.__use_cache = kwargs.get('use_db_cache')
+        self.__use_cache = kwargs.get('use_db_cache', client.use_db_cache)
         self.__enforce_caps = kwargs.get('__enforce_caps', True)
         self.logger = logging.getLogger(__name__)
+        self.__index_by = self.index_by
 
-        if hasattr( self.params, 'indexBy'):
-            self.__index_by = self.__params.indexBy
 
     def clear_cache(self):
         self.__cache = {}
@@ -34,7 +33,7 @@ class DB ():
             del self.__cache[item]
 
     @property
-    def indexBy(self):
+    def index_by(self):
         return self.__params.get('indexBy')
 
     @property
@@ -82,7 +81,7 @@ class DB ():
 
     @property
     def indexed(self):
-        return hasattr(self, '__index_by')
+        return 'indexBy' in self.__params
 
     def info(self):
         endpoint = '/'.join(['db', self.__id_safe])
@@ -112,7 +111,7 @@ class DB ():
             raise CapabilityError('Db {} does not have put capability'.format(self.__dbname))
         if cache is None: cache = self.__use_cache
         if cache:
-            if hasattr(self, '__index_by'):
+            if self.indexed:
                 if hasattr(item, self.__index_by):
                     index_val = getattr(item, self.__index_by)
                 else:

@@ -9,10 +9,12 @@ class OrbitDbAPI ():
         self.logger = logging.getLogger(__name__)
         self.__config = kwargs
         self.__base_url = self.__config.get('base_url')
-        self.__use_db_cache = self.__config.get('use_db_cache')
+        self.__use_db_cache = self.__config.get('use_db_cache', True)
         self.__session = requests.Session()
 
-
+    @property
+    def use_db_cache(self):
+        return self.__use_db_cache
 
     def _do_request(self, *args, **kwargs):
         try:
@@ -41,9 +43,9 @@ class OrbitDbAPI ():
     def list_dbs(self):
         return self._call('get', 'dbs')
 
-    def db(self, dbname, params=None):
-        return DB(self, self.open_db(urlquote(dbname, safe=''), params), **self.__config)
+    def db(self, dbname, **kwargs):
+        return DB(self, self.open_db(dbname, **kwargs), **self.__config)
 
-    def open_db(self, dbname, params=None):
-        endpoint = '/'.join(['db', dbname])
-        return self._call('post', endpoint, params)
+    def open_db(self, dbname, **kwargs):
+        endpoint = '/'.join(['db', urlquote(dbname, safe='')])
+        return self._call('post', endpoint, kwargs)
