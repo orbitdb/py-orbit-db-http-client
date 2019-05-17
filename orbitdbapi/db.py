@@ -137,17 +137,17 @@ class DB ():
         if cache: self.__cache[entry_hash] = item
         return entry_hash
 
-    def iterator_raw(self, params):
+    def iterator_raw(self, **kwargs):
         if self.__enforce_caps and not self.iterable:
             raise CapabilityError('Db {} does not have remove capability'.format(self.__dbname))
         endpoint =  '/'.join(['db', self.__id_safe, 'rawiterator'])
-        return self.__client._call('get', endpoint, params)
+        return self.__client._call('get', endpoint, kwargs)
 
-    def iterator(self, params):
+    def iterator(self, **kwargs):
         if self.__enforce_caps and not self.iterable:
             raise CapabilityError('Db {} does not have remove capability'.format(self.__dbname))
         endpoint =  '/'.join(['db', self.__id_safe, 'iterator'])
-        return self.__client._call('get', endpoint, params)
+        return self.__client._call('get', endpoint, kwargs)
 
     def index(self):
         endpoint = '/'.join(['db', self.__id_safe, 'index'])
