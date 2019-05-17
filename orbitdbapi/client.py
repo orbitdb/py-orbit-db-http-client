@@ -2,6 +2,7 @@ import json
 import logging
 import requests
 from .db import DB
+from hyper.contrib import HTTP20Adapter
 from urllib.parse import quote as urlquote
 
 class OrbitDbAPI ():
@@ -11,6 +12,7 @@ class OrbitDbAPI ():
         self.__base_url = self.__config.get('base_url')
         self.__use_db_cache = self.__config.get('use_db_cache', True)
         self.__session = requests.Session()
+        self.__session.mount(self.__base_url, HTTP20Adapter())
 
     @property
     def use_db_cache(self):
