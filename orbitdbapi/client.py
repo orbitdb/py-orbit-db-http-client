@@ -11,8 +11,9 @@ class OrbitDbAPI ():
         self.__config = kwargs
         self.__base_url = self.__config.get('base_url')
         self.__use_db_cache = self.__config.get('use_db_cache', True)
+
         self.__session = requests.Session()
-        self.__session.mount(self.__base_url, HTTP20Adapter())
+        self.__session.mount(self.__base_url, HTTP20Adapter(timeout=self.__config.get('timeout', 30)))
 
     @property
     def use_db_cache(self):
