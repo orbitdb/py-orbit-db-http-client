@@ -124,8 +124,8 @@ class DB ():
             if index_val:
                 self.__cache[index_val] = item
         endpoint = '/'.join(['db', self.__id_safe, 'put'])
-        entry_hash = self.__client._call('post', endpoint, item)
-        if cache: self.__cache[entry_hash] = item
+        entry_hash = self.__client._call('post', endpoint, item).get('hash')
+        if cache and entry_hash: self.__cache[entry_hash] = item
         return entry_hash
 
     def add(self, item, cache=None):
@@ -133,8 +133,8 @@ class DB ():
             raise CapabilityError('Db {} does not have add capability'.format(self.__dbname))
         if cache is None: cache = self.__use_cache
         endpoint = '/'.join(['db', self.__id_safe, 'add'])
-        entry_hash = self.__client._call('post', endpoint, item)
-        if cache: self.__cache[entry_hash] = item
+        entry_hash = self.__client._call('post', endpoint, item).get('hash')
+        if cache and entry_hash: self.__cache[entry_hash] = item
         return entry_hash
 
     def iterator_raw(self, **kwargs):
