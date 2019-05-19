@@ -2,7 +2,7 @@ import json
 import logging
 import requests
 from .db import DB
-from hyper.contrib import HTTP20Adapter
+from hypertemp.contrib import HTTP20Adapter
 from urllib.parse import quote as urlquote
 
 class OrbitDbAPI ():

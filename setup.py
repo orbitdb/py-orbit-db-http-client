@@ -12,7 +12,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'requests >= 2.11',
-        'hyper >= 0.8.0.dev0'
+        'hypertemp == 0.8.0'
         ],
     classifiers=[
         'Programming Language :: Python :: 3',
