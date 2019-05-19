@@ -11,15 +11,16 @@ class OrbitDbAPI ():
         self.__config = kwargs
         self.__base_url = self.__config.get('base_url')
         self.__use_db_cache = self.__config.get('use_db_cache', True)
-
+        self.__timeout = self.__config.get('timeout', 30)
         self.__session = requests.Session()
-        self.__session.mount(self.__base_url, HTTP20Adapter(timeout=self.__config.get('timeout', 30)))
+        self.__session.mount(self.__base_url, HTTP20Adapter(timeout=self.__timeout))
 
     @property
     def use_db_cache(self):
         return self.__use_db_cache
 
     def _do_request(self, *args, **kwargs):
+        kwargs['timeout'] = kwargs.get('timeout', self.__timeout)
         try:
             return self.__session.request(*args, **kwargs)
         except:

@@ -11,7 +11,8 @@ setup(
     url='https://github.com/phillmac/py-orbit-db-http-client',
     packages=find_packages(),
     install_requires=[
-        'requests >= 2.11'
+        'requests >= 2.11',
+        'hyper >= 0.8.0.dev0'
         ],
     classifiers=[
         'Programming Language :: Python :: 3',
