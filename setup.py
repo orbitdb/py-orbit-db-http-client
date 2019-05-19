@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from orbitdbapi import __version__
+from orbitdbapi.__version__ import __version__
 from setuptools import setup, find_packages
 
 setup(
