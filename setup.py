@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
-from orbitdbapi.__version__ import __version__
 from setuptools import setup, find_packages
+
+version = None
+exec(open('orbitdbapi/version.py').read())
 
 setup(
     name='orbitdbapi',
-    version=__version__,
+    version=version,
     description='A Python HTTP Orbitdb API Client',
     author='Phillip Mackintosh',
     url='https://github.com/phillmac/py-orbit-db-http-client',

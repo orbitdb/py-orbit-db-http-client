@@ -1,6 +1,7 @@
 import json
 import logging
 from copy import deepcopy
+from sseclient import SSEClient
 from collections.abc import Hashable, Iterable
 from urllib.parse import quote as urlquote
 
@@ -171,6 +172,12 @@ class DB ():
     def unload(self):
         endpoint = '/'.join(['db', self.__id_safe])
         return self.__client._call('delete', endpoint)
+
+    def events(self, eventname):
+        endpoint = '/'.join(['db', self.__id_safe,'events', eventname])
+        #return SSEClient('{}/{}'.format(self.__client.base_url, endpoint), session=self.__client.session)
+        req = self.__client._call_raw('get', endpoint, stream=True)
+        return SSEClient(req).events()
 
 class CapabilityError(Exception):
     pass

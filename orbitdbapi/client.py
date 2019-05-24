@@ -16,6 +16,14 @@ class OrbitDbAPI ():
         self.__session.mount(self.__base_url, HTTP20Adapter(timeout=self.__timeout))
 
     @property
+    def session(self):
+        return self.__session
+
+    @property
+    def base_url(self):
+        return self.__base_url
+
+    @property
     def use_db_cache(self):
         return self.__use_db_cache
 
@@ -27,9 +35,12 @@ class OrbitDbAPI ():
             self.logger.exception('Exception during api call')
             raise
 
-    def _call(self, method, endpoint, body=None):
+    def _call_raw(self, method, endpoint, **kwargs):
         url = '/'.join([self.__base_url, endpoint])
-        res = self._do_request(method, url, json=body)
+        return self._do_request(method, url, **kwargs)
+
+    def _call(self, method, endpoint, body=None):
+        res = self._call_raw(method, endpoint, json=body)
         try:
             result = res.json()
         except:
