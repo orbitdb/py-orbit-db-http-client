@@ -14,6 +14,7 @@ class OrbitDbAPI ():
         self.__timeout = self.__config.get('timeout', 30)
         self.__session = requests.Session()
         self.__session.mount(self.__base_url, HTTP20Adapter(timeout=self.__timeout))
+        self.logger.debug('Base url: ' + self.__base_url)
 
     @property
     def session(self):
