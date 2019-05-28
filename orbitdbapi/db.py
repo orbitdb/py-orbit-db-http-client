@@ -174,7 +174,7 @@ class DB ():
         return self.__client._call('delete', endpoint)
 
     def events(self, eventname):
-        endpoint = '/'.join(['db', self.__id_safe,'events', eventname])
+        endpoint = '/'.join(['db', self.__id_safe, 'events', urlquote(eventname, safe='')])
         #return SSEClient('{}/{}'.format(self.__client.base_url, endpoint), session=self.__client.session)
         req = self.__client._call_raw('get', endpoint, stream=True)
         return SSEClient(req).events()
