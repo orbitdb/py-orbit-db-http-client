@@ -14,7 +14,8 @@ setup(
     packages=find_packages(),
     install_requires=[
         'requests >= 2.11',
-        'hypertemp == 0.8.0'
+        'hypertemp == 0.8.0',
+        'sseclient==0.0.24'
         ],
     classifiers=[
         'Programming Language :: Python :: 3',
