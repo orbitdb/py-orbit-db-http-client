@@ -91,7 +91,7 @@ class DB ():
         endpoint = '/'.join(['db', self.__id_safe])
         return self.__client._call('get', endpoint)
 
-    def get(self, item, cache=None):
+    def get(self, item, cache=None, unpack=False):
         if cache is None: cache = self.__use_cache
         item = str(item)
         if cache and item in self.__cache:
@@ -102,8 +102,9 @@ class DB ():
             if cache: self.__cache[item] = result
         if isinstance(result, Hashable): return deepcopy(result)
         if isinstance(result, Iterable): return deepcopy(result)
-        #if isinstance(result, Iterable): return deepcopy(next(result, {}))
-        #if isinstance(result, list): return deepcopy(next(iter(result), {}))
+        if unpack:
+            if isinstance(result, Iterable): return deepcopy(next(result, {}))
+            if isinstance(result, list): return deepcopy(next(iter(result), {}))
         return result
 
     def get_raw(self, item):
@@ -113,13 +114,13 @@ class DB ():
     def put(self,  item, cache=None):
         if self.__enforce_caps and not self.putable:
             raise CapabilityError('Db {} does not have put capability'.format(self.__dbname))
+        if self.indexed and (not hasattr(item, self.__index_by)) and self.__enforce_indexby:
+            raise MissingIndexError("The provided document doesn't contain field '{}'".format(self.__index_by))
+
         if cache is None: cache = self.__use_cache
         if cache:
-            if self.indexed:
-                if hasattr(item, self.__index_by):
+            if self.indexed and hasattr(item, self.__index_by):
                     index_val = getattr(item, self.__index_by)
-                elif self.__enforce_indexby:
-                    raise MissingIndexError("The provided document doesn't contain field '{}'".format(self.__index_by))
             else:
                 index_val = item.get('key')
             if index_val:
@@ -140,13 +141,13 @@ class DB ():
 
     def iterator_raw(self, **kwargs):
         if self.__enforce_caps and not self.iterable:
-            raise CapabilityError('Db {} does not have remove capability'.format(self.__dbname))
+            raise CapabilityError('Db {} does not have iterator capability'.format(self.__dbname))
         endpoint =  '/'.join(['db', self.__id_safe, 'rawiterator'])
         return self.__client._call('get', endpoint, kwargs)
 
     def iterator(self, **kwargs):
         if self.__enforce_caps and not self.iterable:
-            raise CapabilityError('Db {} does not have remove capability'.format(self.__dbname))
+            raise CapabilityError('Db {} does not have iterator capability'.format(self.__dbname))
         endpoint =  '/'.join(['db', self.__id_safe, 'iterator'])
         return self.__client._call('get', endpoint, kwargs)
 
