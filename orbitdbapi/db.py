@@ -87,6 +87,14 @@ class DB ():
     def indexed(self):
         return 'indexBy' in self.__db_options
 
+    @property
+    def can_append(self):
+        return self.__params.get('canAppend')
+
+    @property
+    def write_access(self):
+        return deepcopy(self.__params.get('write'))
+
     def info(self):
         endpoint = '/'.join(['db', self.__id_safe])
         return self.__client._call('get', endpoint)
