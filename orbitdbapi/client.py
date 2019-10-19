@@ -1,9 +1,12 @@
 import json
 import logging
-import requests
-from .db import DB
-from hypertemp.contrib import HTTP20Adapter
+from pprint import pformat
 from urllib.parse import quote as urlquote
+
+import httpx
+
+from .db import DB
+
 
 class OrbitDbAPI ():
     def __init__ (self, **kwargs):
@@ -12,8 +15,7 @@ class OrbitDbAPI ():
         self.__base_url = self.__config.get('base_url')
         self.__use_db_cache = self.__config.get('use_db_cache', True)
         self.__timeout = self.__config.get('timeout', 30)
-        self.__session = requests.Session()
-        self.__session.mount(self.__base_url, HTTP20Adapter(timeout=self.__timeout))
+        self.__session = httpx.Client()
         self.logger.debug('Base url: ' + self.__base_url)
 
     @property
@@ -29,6 +31,7 @@ class OrbitDbAPI ():
         return self.__use_db_cache
 
     def _do_request(self, *args, **kwargs):
+        self.logger.log(15, json.dumps([args, kwargs]))
         kwargs['timeout'] = kwargs.get('timeout', self.__timeout)
         try:
             return self.__session.request(*args, **kwargs)
@@ -40,8 +43,8 @@ class OrbitDbAPI ():
         url = '/'.join([self.__base_url, endpoint])
         return self._do_request(method, url, **kwargs)
 
-    def _call(self, method, endpoint, body=None):
-        res = self._call_raw(method, endpoint, json=body)
+    def _call(self, method, endpoint,  **kwargs):
+        res = self._call_raw(method, endpoint, **kwargs)
         try:
             result = res.json()
         except:
@@ -52,16 +55,16 @@ class OrbitDbAPI ():
             res.raise_for_status()
         except:
             self.logger.exception('Server Error')
-            self.logger.debug(result)
+            self.logger.error(pformat(result))
             raise
         return result
 
     def list_dbs(self):
-        return self._call('get', 'dbs')
+        return self._call('GET', 'dbs')
 
     def db(self, dbname, **kwargs):
         return DB(self, self.open_db(dbname, **kwargs), **self.__config)
 
     def open_db(self, dbname, **kwargs):
         endpoint = '/'.join(['db', urlquote(dbname, safe='')])
-        return self._call('post', endpoint, kwargs)
+        return self._call('POST', endpoint, **kwargs)
