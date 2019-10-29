@@ -38,6 +38,10 @@ class DB ():
             del self.__cache[item]
 
     @property
+    def cached(self):
+        return self.__use_cache
+
+    @property
     def index_by(self):
         return self.__index_by
 
@@ -52,6 +56,10 @@ class DB ():
     @property
     def dbname(self):
         return self.__dbname
+
+    @property
+    def id(self):
+        return self.__id
 
     @property
     def dbtype(self):
@@ -128,8 +136,8 @@ class DB ():
     def put(self,  item, cache=None):
         if self.__enforce_caps and not self.putable:
             raise CapabilityError(f'Db {self.__dbname} does not have put capability')
-        if self.indexed and (not hasattr(item, self.__index_by)) and self.__enforce_indexby:
-            raise MissingIndexError("The provided document doesn't contain field '{}'".format(self.__index_by))
+        if self.indexed and (not self.__index_by in item) and self.__enforce_indexby:
+            raise MissingIndexError(f"The provided document {item} doesn't contain field '{self.__index_by}'")
 
         if cache is None: cache = self.__use_cache
         if cache:
@@ -140,7 +148,7 @@ class DB ():
             if index_val:
                 self.__cache[index_val] = item
         endpoint = '/'.join(['db', self.__id_safe, 'put'])
-        entry_hash = self.__client._call('POST', endpoint, item).get('hash')
+        entry_hash = self.__client._call('POST', endpoint, json=item).get('hash')
         if cache and entry_hash: self.__cache[entry_hash] = item
         return entry_hash
 
@@ -149,9 +157,18 @@ class DB ():
             raise CapabilityError(f'Db {self.__dbname} does not have add capability')
         if cache is None: cache = self.__use_cache
         endpoint = '/'.join(['db', self.__id_safe, 'add'])
-        entry_hash = self.__client._call('POST', endpoint, item).get('hash')
+        entry_hash = self.__client._call('POST', endpoint, json=item).get('hash')
         if cache and entry_hash: self.__cache[entry_hash] = item
         return entry_hash
+
+    def inc(self, val):
+        val = int(val)
+        endpoint = '/'.join(['db', self.__id_safe, 'inc'])
+        return self.__client._call('POST', endpoint, json={'val':val})
+
+    def value(self):
+        endpoint = '/'.join(['db', self.__id_safe, 'value'])
+        return self.__client._call('GET', endpoint)
 
     def iterator_raw(self, **kwargs):
         if self.__enforce_caps and not self.iterable:
@@ -190,10 +207,18 @@ class DB ():
 
     def events(self, eventname):
         endpoint = '/'.join(['db', self.__id_safe, 'events', urlquote(eventname, safe='')])
-        #return SSEClient('{}/{}'.format(self.__client.base_url, endpoint), session=self.__client.session)
         res = self.__client._call_raw('GET', endpoint, stream=True)
         res.raise_for_status()
         return SSEClient(res.stream()).events()
+
+    def findPeers(self, **kwargs):
+        endpoint = '/'.join(['peers','searches','db', self.__id_safe])
+        return self.__client._call('POST', endpoint, json=kwargs)
+
+    def getPeers(self):
+        endpoint = '/'.join(['db', self.__id_safe, 'peers'])
+        return self.__client._call('GET', endpoint)
+
 
 class CapabilityError(Exception):
     pass
