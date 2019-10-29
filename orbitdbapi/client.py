@@ -49,7 +49,7 @@ class OrbitDbAPI ():
             result = res.json()
         except:
             self.logger.warning('Json decode error', exc_info=True)
-            self.logger.debug(res.text)
+            self.logger.log(15, res.text)
             raise
         try:
             res.raise_for_status()
@@ -62,9 +62,14 @@ class OrbitDbAPI ():
     def list_dbs(self):
         return self._call('GET', 'dbs')
 
-    def db(self, dbname, **kwargs):
-        return DB(self, self.open_db(dbname, **kwargs), **self.__config)
+    def db(self, dbname, local_options=None, **kwargs):
+        if local_options is None: local_options = {}
+        return DB(self, self.open_db(dbname, **kwargs), **{**self.__config, **local_options})
 
     def open_db(self, dbname, **kwargs):
         endpoint = '/'.join(['db', urlquote(dbname, safe='')])
         return self._call('POST', endpoint, **kwargs)
+
+    def searches(self):
+        endpoint = '/'.join(['peers', 'searches'])
+        return self._call('GET', endpoint)
