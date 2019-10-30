@@ -1,9 +1,10 @@
 import json
 import logging
-from copy import deepcopy
-from sseclient import SSEClient
 from collections.abc import Hashable, Iterable
+from copy import deepcopy
 from urllib.parse import quote as urlquote
+
+from sseclient import SSEClient
 
 
 class DB ():
@@ -37,6 +38,10 @@ class DB ():
             del self.__cache[item]
 
     @property
+    def cached(self):
+        return self.__use_cache
+
+    @property
     def index_by(self):
         return self.__index_by
 
@@ -53,35 +58,44 @@ class DB ():
         return self.__dbname
 
     @property
+    def id(self):
+        return self.__id
+
+    @property
     def dbtype(self):
         return self.__type
 
     @property
+    def capabilities(self):
+        return deepcopy(self.__params.get('capabilities', []))
+
+    @property
     def queryable(self):
-        return 'query' in self.__params.get('capabilities', {})
+        return 'query' in self.__params.get('capabilities', [])
+
     @property
     def putable(self):
-        return 'put' in self.__params.get('capabilities', {})
+        return 'put' in self.__params.get('capabilities', [])
 
     @property
     def removeable(self):
-        return 'remove' in self.__params.get('capabilities', {})
+        return 'remove' in self.__params.get('capabilities', [])
 
     @property
     def iterable(self):
-        return 'iterator' in self.__params.get('capabilities', {})
+        return 'iterator' in self.__params.get('capabilities', [])
 
     @property
     def addable(self):
-        return 'add' in self.__params.get('capabilities', {})
+        return 'add' in self.__params.get('capabilities', [])
 
     @property
     def valuable(self):
-        return 'value' in self.__params.get('capabilities', {})
+        return 'value' in self.__params.get('capabilities', [])
 
     @property
     def incrementable(self):
-        return 'inc' in self.__params.get('capabilities', {})
+        return 'inc' in self.__params.get('capabilities', [])
 
     @property
     def indexed(self):
@@ -97,7 +111,7 @@ class DB ():
 
     def info(self):
         endpoint = '/'.join(['db', self.__id_safe])
-        return self.__client._call('get', endpoint)
+        return self.__client._call('GET', endpoint)
 
     def get(self, item, cache=None, unpack=False):
         if cache is None: cache = self.__use_cache
@@ -106,7 +120,7 @@ class DB ():
             result = self.__cache[item]
         else:
             endpoint = '/'.join(['db', self.__id_safe, item])
-            result = self.__client._call('get', endpoint)
+            result = self.__client._call('GET', endpoint)
             if cache: self.__cache[item] = result
         if isinstance(result, Hashable): return deepcopy(result)
         if isinstance(result, Iterable): return deepcopy(result)
@@ -117,13 +131,13 @@ class DB ():
 
     def get_raw(self, item):
         endpoint = '/'.join(['db', self.__id_safe, 'raw', str(item)])
-        return (self.__client._call('get', endpoint))
+        return (self.__client._call('GET', endpoint))
 
     def put(self,  item, cache=None):
         if self.__enforce_caps and not self.putable:
-            raise CapabilityError('Db {} does not have put capability'.format(self.__dbname))
-        if self.indexed and (not hasattr(item, self.__index_by)) and self.__enforce_indexby:
-            raise MissingIndexError("The provided document doesn't contain field '{}'".format(self.__index_by))
+            raise CapabilityError(f'Db {self.__dbname} does not have put capability')
+        if self.indexed and (not self.__index_by in item) and self.__enforce_indexby:
+            raise MissingIndexError(f"The provided document {item} doesn't contain field '{self.__index_by}'")
 
         if cache is None: cache = self.__use_cache
         if cache:
@@ -134,59 +148,77 @@ class DB ():
             if index_val:
                 self.__cache[index_val] = item
         endpoint = '/'.join(['db', self.__id_safe, 'put'])
-        entry_hash = self.__client._call('post', endpoint, item).get('hash')
+        entry_hash = self.__client._call('POST', endpoint, json=item).get('hash')
         if cache and entry_hash: self.__cache[entry_hash] = item
         return entry_hash
 
     def add(self, item, cache=None):
         if self.__enforce_caps and not self.addable:
-            raise CapabilityError('Db {} does not have add capability'.format(self.__dbname))
+            raise CapabilityError(f'Db {self.__dbname} does not have add capability')
         if cache is None: cache = self.__use_cache
         endpoint = '/'.join(['db', self.__id_safe, 'add'])
-        entry_hash = self.__client._call('post', endpoint, item).get('hash')
+        entry_hash = self.__client._call('POST', endpoint, json=item).get('hash')
         if cache and entry_hash: self.__cache[entry_hash] = item
         return entry_hash
 
+    def inc(self, val):
+        val = int(val)
+        endpoint = '/'.join(['db', self.__id_safe, 'inc'])
+        return self.__client._call('POST', endpoint, json={'val':val})
+
+    def value(self):
+        endpoint = '/'.join(['db', self.__id_safe, 'value'])
+        return self.__client._call('GET', endpoint)
+
     def iterator_raw(self, **kwargs):
         if self.__enforce_caps and not self.iterable:
-            raise CapabilityError('Db {} does not have iterator capability'.format(self.__dbname))
+            raise CapabilityError(f'Db {self.__dbname} does not have iterator capability')
         endpoint =  '/'.join(['db', self.__id_safe, 'rawiterator'])
-        return self.__client._call('get', endpoint, kwargs)
+        return self.__client._call('GET', endpoint, json=kwargs)
 
     def iterator(self, **kwargs):
         if self.__enforce_caps and not self.iterable:
-            raise CapabilityError('Db {} does not have iterator capability'.format(self.__dbname))
+            raise CapabilityError(f'Db {self.__dbname} does not have iterator capability')
         endpoint =  '/'.join(['db', self.__id_safe, 'iterator'])
-        return self.__client._call('get', endpoint, kwargs)
+        return self.__client._call('GET', endpoint, json=kwargs)
 
     def index(self):
         endpoint = '/'.join(['db', self.__id_safe, 'index'])
-        result = self.__client._call('get', endpoint)
+        result = self.__client._call('GET', endpoint)
         return result
 
     def all(self):
         endpoint = '/'.join(['db', self.__id_safe, 'all'])
-        result = self.__client._call('get', endpoint)
+        result = self.__client._call('GET', endpoint)
         if isinstance(result, Hashable):
             self.__cache = result
         return result
 
     def remove(self, item):
         if self.__enforce_caps and not self.removeable:
-            raise CapabilityError('Db {} does not have remove capability'.format(self.__dbname))
+            raise CapabilityError(f'Db {self.__dbname} does not have remove capability')
         item = str(item)
         endpoint = '/'.join(['db', self.__id_safe, item])
-        return self.__client._call('delete', endpoint)
+        return self.__client._call('DELETE', endpoint)
 
     def unload(self):
         endpoint = '/'.join(['db', self.__id_safe])
-        return self.__client._call('delete', endpoint)
+        return self.__client._call('DELETE', endpoint)
 
     def events(self, eventname):
         endpoint = '/'.join(['db', self.__id_safe, 'events', urlquote(eventname, safe='')])
-        #return SSEClient('{}/{}'.format(self.__client.base_url, endpoint), session=self.__client.session)
-        req = self.__client._call_raw('get', endpoint, stream=True)
-        return SSEClient(req).events()
+        res = self.__client._call_raw('GET', endpoint, stream=True)
+        res.raise_for_status()
+        return SSEClient(res.stream()).events()
+
+    def findPeers(self, **kwargs):
+        endpoint = '/'.join(['peers','searches','db', self.__id_safe])
+        return self.__client._call('POST', endpoint, json=kwargs)
+
+    def getPeers(self):
+        endpoint = '/'.join(['db', self.__id_safe, 'peers'])
+        return self.__client._call('GET', endpoint)
+
 
 class CapabilityError(Exception):
     pass
