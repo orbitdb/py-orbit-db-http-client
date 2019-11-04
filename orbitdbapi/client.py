@@ -15,8 +15,13 @@ class OrbitDbAPI ():
         self.__base_url = self.__config.get('base_url')
         self.__use_db_cache = self.__config.get('use_db_cache', True)
         self.__timeout = self.__config.get('timeout', 30)
-        self.__session = httpx.Client()
-        self.logger.debug('Base url: ' + self.__base_url)
+        self.__headers = httpx.Headers(self.__config.get('headers', {}))
+        self.__session = httpx.Client(
+            headers=self.__headers,
+            timeout=self.__timeout
+            )
+        self.logger.debug(f'Base url: {self.__base_url}')
+        self.logger.debug(f'Headers: {self.__headers.items()}')
 
     @property
     def session(self):
@@ -32,7 +37,7 @@ class OrbitDbAPI ():
 
     def _do_request(self, *args, **kwargs):
         self.logger.log(15, json.dumps([args, kwargs]))
-        kwargs['timeout'] = kwargs.get('timeout', self.__timeout)
+        #kwargs['timeout'] = kwargs.get('timeout', self.__timeout)
         try:
             return self.__session.request(*args, **kwargs)
         except:
