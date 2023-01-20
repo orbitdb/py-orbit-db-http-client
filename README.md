@@ -17,6 +17,8 @@ pip install orbitdbapi
 ### Install using source
 Clone, and then run:
 ```sh
+git clone https://github.com/orbitdb/py-orbit-db-http-client.git
+cd py-orbit-db-http-client
 py setup.py
 ```
 -----------------------------
