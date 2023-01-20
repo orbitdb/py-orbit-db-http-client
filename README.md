@@ -16,7 +16,7 @@ py setup.py
 
 ## Usage
 
-TODO
+### Install using pip : `pip install orbitdbapi`
 
 ## Contributing
 

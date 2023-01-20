@@ -8,7 +8,20 @@ from sseclient import SSEClient
 
 
 class DB ():
+    """ 
+    A class for interacting with a specific OrbitDB database.
+    """
     def __init__(self, client, params, **kwargs):
+        """
+        Initialize a DB object.
+        Args:
+            client (OrbitDbAPI): The client object used to interact with the API.
+            params (dict): A dictionary of parameters for the database.
+            **kwargs: Additional keyword arguments.
+            - 'use_db_cache': Whether to use a cache for database objects (bool, default=True).
+            - 'enforce_caps': Whether to enforce the presence of capabilities in the database (bool, default=True).
+            - 'enforce_indexby': Whether to enforce the presence of an indexBy option in the database (bool, default=True).
+        """
         self.__cache = {}
         self.__client = client
         self.__params = params
@@ -26,71 +39,126 @@ class DB ():
 
 
     def clear_cache(self):
+        """
+        Clear the cache of the database.
+        """
         self.__cache = {}
 
     def cache_get(self, item):
+        """
+        Retrieve an item from the cache of the database.
+        Args:
+        item: The item to retrieve from the cache.
+        """
         item = str(item)
         return deepcopy(self.__cache.get(item))
 
     def cache_remove(self, item):
+        """
+        Remove an item from the cache of the database.
+        Args:
+        item: The item to remove from the cache.
+        """
         item = str(item)
         if item in self.__cache:
             del self.__cache[item]
 
     @property
     def cached(self):
+        """
+        Returns whether the client uses a cache for database objects.
+        """
         return self.__use_cache
 
     @property
     def index_by(self):
+        """
+        Returns the indexBy option of the database.
+        """
         return self.__index_by
 
     @property
     def cache(self):
+        """
+        Returns the cache of the database.
+        """
         return deepcopy(self.__cache)
 
     @property
     def params(self):
+        """
+        Returns the parameters of the database.
+        """
         return deepcopy(self.__params)
 
     @property
     def dbname(self):
+        """
+        Returns the name of the database.
+        """
         return self.__dbname
 
     @property
     def id(self):
+        """
+        Returns the id of the database.
+        """
         return self.__id
 
     @property
     def dbtype(self):
+        """
+        Returns the type of the database.
+        """
         return self.__type
 
     @property
     def capabilities(self):
+        """
+        Returns the capabilities of the database.
+        """
         return deepcopy(self.__params.get('capabilities', []))
 
     @property
     def queryable(self):
+        """
+        Returns whether the database is queryable.
+        """
         return 'query' in self.__params.get('capabilities', [])
 
     @property
     def putable(self):
+        """
+        Returns whether the database is putable.
+        """
         return 'put' in self.__params.get('capabilities', [])
 
     @property
     def removeable(self):
+        """
+        Returns whether the database is removeable.
+        """
         return 'remove' in self.__params.get('capabilities', [])
 
     @property
     def iterable(self):
+        """
+        Returns whether the database is iterable.
+        """
         return 'iterator' in self.__params.get('capabilities', [])
 
     @property
     def addable(self):
+        """
+        Returns whether the database is addable.
+        """
         return 'add' in self.__params.get('capabilities', [])
 
     @property
     def valuable(self):
+        """
+        Returns whether the database is valuable.
+        """
         return 'value' in self.__params.get('capabilities', [])
 
     @property

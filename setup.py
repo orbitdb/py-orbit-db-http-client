@@ -10,7 +10,7 @@ setup(
     version=version,
     description='A Python HTTP Orbitdb API Client',
     author='Phillip Mackintosh',
-    url='https://github.com/phillmac/py-orbit-db-http-client',
+    url='https://github.com/orbitdb/py-orbit-db-http-client',
     packages=find_packages(),
     install_requires=[
         'httpx >= 0.7.5',
